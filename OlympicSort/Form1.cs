@@ -191,7 +191,6 @@ namespace OlympicSort
                     bool swapRequired = ascending ? arr[j] > arr[j + 1] : arr[j] < arr[j + 1];
                     if (swapRequired)
                     {
-                        // Swap arr[j] and arr[j+1]
                         double temp = arr[j];
                         arr[j] = arr[j + 1];
                         arr[j + 1] = temp;
