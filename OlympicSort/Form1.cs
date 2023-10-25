@@ -9,6 +9,7 @@ using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using System.Diagnostics;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Drawing;
 
 namespace OlympicSort
 {
@@ -129,6 +130,7 @@ namespace OlympicSort
             string[] numbersAsString = textBox1.Text.Split(' ');
 
             double[] arr = new double[numbersAsString.Length];
+            bool can = true;
 
             for (int i = 0; i < numbersAsString.Length; i++)
             {
@@ -138,26 +140,29 @@ namespace OlympicSort
                 }
                 else
                 {
-                    Console.WriteLine($"Ошибка преобразования числа: {numbersAsString[i]}");
+                    MessageBox.Show($"Ошибка преобразования числа: {numbersAsString[i]}");
+                    can = false;
                 }
             }
 
             if (checkBox1.Checked)
             {
-                BubbleSort(arr);
+                BubbleSort(arr);                
             }
             else if (checkBox5.Checked)
             {
                 InsertionSort(arr);
+                
             }
             else if (checkBox3.Checked)
             {
                 ShakerSort(arr);
+                
             }
             else if (checkBox2.Checked)
             {
-                textBox2.Text = "Som";
-                //QuickSortAlgorithm(numbers, 0, numbers.Length - 1);
+                QuickSort(arr, 0, arr.Length - 1);
+                
             }
             else if (checkBox4.Checked)
             {
@@ -166,15 +171,17 @@ namespace OlympicSort
             textBox2.Clear();
             for (int i = 0; i < arr.Length; i++)
             {
-                textBox2.Text += arr[i].ToString() + " ";
+                if (can)
+                {
+                    textBox2.Text += arr[i].ToString() + " ";
+                }
             }
         }
-
-        
         static void BubbleSort(double[] arr, bool ascending = true, Label timeLabel = null)
         {
-            //Stopwatch stopwatch = new Stopwatch();
-            //stopwatch.Start();
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             int n = arr.Length;
             for (int i = 0; i < n - 1; i++)
@@ -192,17 +199,16 @@ namespace OlympicSort
                 }
             }
 
-           /* stopwatch.Stop();
-
-            TimeSpan elapsedTime = stopwatch.Elapsed;
-            timeLabel?.Invoke(new Action(() => timeLabel.Text = $"Bubble Sort Time: {elapsedTime}"));*/
+            stopwatch.Stop();
+            var answer1 = stopwatch.Elapsed;
+            //MessageBox.Show($"время выполнения пузырьковой: {answer1}");
         }
 
 
         static void InsertionSort(double[] arr, bool ascending = true, Label timeLabel = null)
         {
-            //Stopwatch stopwatch = new Stopwatch();
-            //stopwatch.Start();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             int n = arr.Length;
             for (int i = 1; i < n; ++i)
@@ -220,62 +226,59 @@ namespace OlympicSort
                 arr[j + 1] = key;
             }
 
-            /*stopwatch.Stop();
-
-            TimeSpan elapsedTime = stopwatch.Elapsed;
-            timeLabel?.Invoke(new Action(() => timeLabel.Text = $"Bubble Sort Time: {elapsedTime}"));*/
+            stopwatch.Stop();
+            var answer2 = stopwatch.Elapsed;
+            MessageBox.Show($"время выполнения вставками: {answer2}");
+            //timeExecution[1] = stopwatch.Elapsed;
         }
 
-        /*static void QuickSort(int[] arr, bool ascending = true, Label timeLabel = null)
+        static void QuickSort(double[] arr, int left, int right)
         {
-            /*Stopwatch stopwatch = new Stopwatch();
+            var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            if (low < high)
+            if (left < right)
             {
-                int partitionIndex = Partition(arr, low, high, ascending);
+                int pivot = Partition(arr, left, right);
 
-                QuickSort(arr, low, partitionIndex - 1, ascending);
-                QuickSort(arr, partitionIndex + 1, high, ascending);
+                QuickSort(arr, left, pivot - 1);
+                QuickSort(arr, pivot + 1, right);
             }
 
-            /*stopwatch.Stop();
-
-            TimeSpan elapsedTime = stopwatch.Elapsed;
-            timeLabel?.Invoke(new Action(() => timeLabel.Text = $"Bubble Sort Time: {elapsedTime}"));
-        }*/
-        public int Partition(double[] arr, int low, int high, bool ascending)
+            stopwatch.Stop();
+            var answer3 = stopwatch.Elapsed;
+            MessageBox.Show($"время выполнения быстрой: {answer3}");
+           
+        }
+        static int Partition(double[] arr, int left, int right)
         {
-            double pivot = arr[high];
-            int i = (low - 1);
+            double pivot = arr[right];
+            int i = (left - 1);
 
-            for (int j = low; j < high; j++)
+            for (int j = left; j < right; j++)
             {
-                bool swapRequired = ascending ? arr[j] <= pivot : arr[j] >= pivot;
-                if (swapRequired)
+                if (arr[j] <= pivot)
                 {
                     i++;
-                    // Swap arr[i] and arr[j]
                     double temp = arr[i];
                     arr[i] = arr[j];
                     arr[j] = temp;
                 }
             }
-
-            // Swap arr[i+1] and arr[high] (or pivot)
             double temp1 = arr[i + 1];
-            arr[i + 1] = arr[high];
-            arr[high] = temp1;
+            arr[i + 1] = arr[right];
+            arr[right] = temp1;
 
             return i + 1;
         }
 
         private void ShakerSort(double[] arr)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             bool swapped;
             do
             {
-                // Проход слева направо, как в обычной сортировке пузырьком
                 swapped = false;
                 for (int i = 0; i <= arr.Length - 2; i++)
                 {
@@ -291,12 +294,8 @@ namespace OlympicSort
                     break;
                 }
 
-                // Если не было обменов на этом проходе, массив уже отсортирован,
-                // и следующий проход слева направо не нужен
-
                 swapped = false;
 
-                // Проход справа налево
                 for (int i = arr.Length - 2; i >= 0; i--)
                 {
                     if (arr[i] > arr[i + 1])
@@ -306,6 +305,9 @@ namespace OlympicSort
                     }
                 }
             } while (swapped);
+            stopwatch.Stop();
+            var answer4 = stopwatch.Elapsed;
+            MessageBox.Show($"время выполнения шейкерной: {answer4}");
         }
         static void Swap(double[] arr, int i, int j)
         {
@@ -316,12 +318,17 @@ namespace OlympicSort
 
         private void BogoSort(double[] arr)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             Random random = new Random();
 
             while (!IsSorted(arr))
             {
                 Shuffle(arr, random);
             }
+            stopwatch.Stop();
+            var answer5 = stopwatch.Elapsed;
+            MessageBox.Show($"время выполнения бого: {answer5}");
         }
         static void Shuffle(double[] arr, Random random)
         {
@@ -329,7 +336,6 @@ namespace OlympicSort
             for (int i = 0; i < n; i++)
             {
                 int randomIndex = i + random.Next(n - i);
-                // Обмен элементов
                 double temp = arr[i];
                 arr[i] = arr[randomIndex];
                 arr[randomIndex] = temp;
@@ -363,5 +369,21 @@ namespace OlympicSort
         {
 
         }
+
+       /* private void drawMarking()
+        {
+            buffered = BufferedGraphicsManager.Current.Allocate(pictureBox1.CreateGraphics(), pictureBox1.DisplayRectangle);
+            Pen pen = new Pen(Color.DarkGreen);
+
+            for (int i = 0; i < pictureBox1.Height; i += 15)
+                buffered.Graphics.DrawLine(pen, 0, pictureBox1.Height - i, pictureBox1.Width, pictureBox1.Height - i);
+            for (int i = 0; i < pictureBox1.Width; i += 15)
+                buffered.Graphics.DrawLine(pen, i, 0, i, pictureBox1.Width);
+        }
+        private void pictureBox1_Resize(object sender, EventArgs e)
+        {
+            drawMarking();
+            buffered.Render();
+        }*/
     }
 }
