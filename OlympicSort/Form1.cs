@@ -163,7 +163,6 @@ namespace OlympicSort
                 chart1.Series["Numbers"].Points.AddY(number);
             }
 
-            // Обновите график
             chart1.Invalidate();
         }
         private void BubbleSort(List<double> list)
@@ -177,14 +176,11 @@ namespace OlympicSort
                 {
                     if (list[j] > list[j + 1])
                     {
-                        // Обменять элементы и запомнить их индексы
                         temp = list[j];
                         list[j] = list[j + 1];
                         list[j + 1] = temp;
                         UpdateChart(list);
 
-                        // Приостановка выполнения для визуализации процесса сортировки
-                        //Thread.Sleep(100);
                     }
                 }
             }
