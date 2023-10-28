@@ -34,7 +34,85 @@ namespace OlympicSort
                 dataGridView1.Rows.Add(random.Next(100), random.Next(100));
             }
         }
-        
+
+        private void importToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            double cellValue;
+            int rCnt;
+            int cCnt;
+
+            OpenFileDialog opf = new OpenFileDialog();
+            opf.Filter = "Excel (*.XLSX)|*.XLSX";
+            opf.ShowDialog();
+            System.Data.DataTable tb = new System.Data.DataTable();
+            string filename = opf.FileName;
+
+            Microsoft.Office.Interop.Excel.Application ExcelApp = new Microsoft.Office.Interop.Excel.Application();
+            Microsoft.Office.Interop.Excel._Workbook ExcelWorkBook;
+            Microsoft.Office.Interop.Excel.Worksheet ExcelWorkSheet;
+            Microsoft.Office.Interop.Excel.Range ExcelRange;
+
+            ExcelWorkBook = ExcelApp.Workbooks.Open(filename, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false,
+                false, 0, true, 1, 0);
+            ExcelWorkSheet = (Microsoft.Office.Interop.Excel.Worksheet)ExcelWorkBook.Worksheets.get_Item(1);
+
+            ExcelRange = ExcelWorkSheet.UsedRange;
+            dataGridView1.RowCount = 7;
+            dataGridView1.ColumnCount = 1;
+            for (rCnt = 1; rCnt <= ExcelRange.Rows.Count; rCnt++)
+            {
+                dataGridView1.Rows.Add(1);
+                for (cCnt = 1; cCnt <= 1; cCnt++)
+                {
+                    object cellValueObject = ExcelRange.Cells[rCnt, cCnt].Value2;
+                    //double cellValue;
+                    
+
+                    if (cellValueObject != null && cellValueObject != DBNull.Value)
+                    {
+                        // Приводим значение ячейки к числовому типу (double)
+                        cellValue = (double)(ExcelRange.Cells[rCnt, cCnt] as Microsoft.Office.Interop.Excel.Range).Value2;
+                        dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = cellValue;
+                    }
+                    else
+                    {
+                        // Обработка случая, если значение ячейки Excel равно null или DBNull.Value
+                        // В этом примере, можно установить значение в 0 или оставить ячейку пустой, в зависимости от вашего желания.
+                        dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = 0; // или просто оставьте ячейку пустой: dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = null;
+                    }
+                    // Приводим значение ячейки к числовому типу (double)
+                    //cellValue = (double)(ExcelRange.Cells[rCnt, cCnt] as Microsoft.Office.Interop.Excel.Range).Value2;
+                    //dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = cellValue;
+                }
+
+            }
+            ExcelWorkBook.Close(true, null, null);
+            ExcelApp.Quit();
+
+            releaseObject(ExcelWorkSheet);
+            releaseObject(ExcelWorkBook);
+            releaseObject(ExcelApp);
+        }
+
+        private void releaseObject(object obj)
+        {
+            try
+            {
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(obj);
+                obj = null;
+            }
+            catch (Exception ex)
+            {
+                obj = null;
+                MessageBox.Show("Unable to release the object " + ex.ToString());
+            }
+            finally
+            {
+                GC.Collect();
+            }
+        }
+
+
         private void calculateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SortNumbers(SortOrder.Ascending);
