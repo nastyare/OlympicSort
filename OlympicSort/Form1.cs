@@ -65,24 +65,16 @@ namespace OlympicSort
                 for (cCnt = 1; cCnt <= 1; cCnt++)
                 {
                     object cellValueObject = ExcelRange.Cells[rCnt, cCnt].Value2;
-                    //double cellValue;
-                    
 
                     if (cellValueObject != null && cellValueObject != DBNull.Value)
                     {
-                        // Приводим значение ячейки к числовому типу (double)
                         cellValue = (double)(ExcelRange.Cells[rCnt, cCnt] as Microsoft.Office.Interop.Excel.Range).Value2;
                         dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = cellValue;
                     }
                     else
                     {
-                        // Обработка случая, если значение ячейки Excel равно null или DBNull.Value
-                        // В этом примере, можно установить значение в 0 или оставить ячейку пустой, в зависимости от вашего желания.
-                        dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = 0; // или просто оставьте ячейку пустой: dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = null;
+                        dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = 0; 
                     }
-                    // Приводим значение ячейки к числовому типу (double)
-                    //cellValue = (double)(ExcelRange.Cells[rCnt, cCnt] as Microsoft.Office.Interop.Excel.Range).Value2;
-                    //dataGridView1.Rows[rCnt - 1].Cells[cCnt - 1].Value = cellValue;
                 }
 
             }
