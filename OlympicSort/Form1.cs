@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Text;
 
 namespace OlympicSort
 {
@@ -24,7 +26,6 @@ namespace OlympicSort
 
         private void GenerateRandomData()
         {
-            // Generate random data and populate the DataGridView
             Random random = new Random();
             dataGridView1.Rows.Clear();
 
@@ -33,126 +34,94 @@ namespace OlympicSort
                 dataGridView1.Rows.Add(random.Next(100), random.Next(100));
             }
         }
-        Dictionary<string, TimeSpan> sortingMethodsTimes = new Dictionary<string, TimeSpan>();
+        
         private void calculateToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            bool can = true;
-
-            arr.Clear();
+            SortNumbers(SortOrder.Ascending);
+        }
+        private void QuickSortWrapper(List<double> list, SortOrder sortOrder)
+        {
+            List<double> copy = new List<double>(list);
+            QuickSort(copy, 0, copy.Count - 1, sortOrder);
+        }
+        private void SortNumbers(SortOrder sortOrder)
+        { 
+            if (!checkBox1.Checked && !checkBox2.Checked && !checkBox3.Checked &&
+                !checkBox4.Checked && !checkBox5.Checked)
+            {
+                MessageBox.Show("Не выбран ни один из методов", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            List<double> dataGridViewNumbers = new List<double>();
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
                 if (row.Cells[0].Value != null && double.TryParse(row.Cells[0].Value.ToString(), out double number))
                 {
-                    arr.Add(number);
+                    dataGridViewNumbers.Add(number);
                 }
             }
+            if (checkBox1.Checked)
+            {
+                BubbleSort(dataGridViewNumbers, sortOrder);
+            }
+            if (checkBox5.Checked)
+            {
+                InsertionSort(dataGridViewNumbers, sortOrder);
+            }
+            if (checkBox3.Checked)
+            {
+                ShakerSort(dataGridViewNumbers, sortOrder);
+            }
+            if (checkBox2.Checked)
+            {
+                QuickSort(dataGridViewNumbers, 0, dataGridViewNumbers.Count - 1, sortOrder);
+            }
+            if (checkBox4.Checked)
+            {
+                BogoSort(dataGridViewNumbers, sortOrder);
+            }
+
+            
+            StringBuilder resultBuilder = new StringBuilder();
 
             if (checkBox1.Checked)
             {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                string method = "Bubble Sort";
-                BubbleSort(arr);
-                stopwatch.Stop();
-                //MessageBox.Show($"Время выполнения пузырьковой: {stopwatch.Elapsed}");
-                sortingMethodsTimes.Add(method, stopwatch.Elapsed);
+                resultBuilder.AppendLine($"время выполнения пузырьковой: {SortAndMeasureTime(BubbleSort, sortOrder)} нс");
             }
-            else if (checkBox5.Checked)
+            if (checkBox5.Checked)
             {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Restart();
-                string method = "Insertion Sort";
-                InsertionSort(arr);
-                stopwatch.Stop();
-                //MessageBox.Show($"Время выполнения вставками: {stopwatch.Elapsed}");
-                sortingMethodsTimes.Add(method, stopwatch.Elapsed);
+                resultBuilder.AppendLine($"время выполнения вставок: {SortAndMeasureTime(InsertionSort, sortOrder)} нс");
             }
-            else if (checkBox3.Checked)
+            if (checkBox3.Checked)
             {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Restart();
-                string method = "Shaker Sort";
-                ShakerSort(arr);
-                stopwatch.Stop();
-                //MessageBox.Show($"Время выполнения шейкерной: {stopwatch.Elapsed}");
-                sortingMethodsTimes.Add(method, stopwatch.Elapsed);
+                resultBuilder.AppendLine($"время выполнения шейкерной: {SortAndMeasureTime(ShakerSort, sortOrder)} нс");
             }
-            else if (checkBox2.Checked)
+            if (checkBox2.Checked)
             {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Restart();
-                string method = "Quick Sort";
-                QuickSort(arr, 0, arr.Count - 1);
-                stopwatch.Stop();
-                //MessageBox.Show($"Время выполнения быстрой: {stopwatch.Elapsed}");
-                sortingMethodsTimes.Add(method, stopwatch.Elapsed);
+                resultBuilder.AppendLine($"время выполнения быстрой: {SortAndMeasureTime(QuickSortWrapper, sortOrder)} нс");
             }
-            else if (checkBox4.Checked)
+            if (checkBox4.Checked)
             {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Restart();
-                string method = "BOGO Sort";
-                BogoSort(arr);
-                stopwatch.Stop();
-                var time = stopwatch.Elapsed;
-                //MessageBox.Show($"Время выполнения BOGO: {stopwatch.Elapsed}");
-                sortingMethodsTimes.Add(method, stopwatch.Elapsed);
+                resultBuilder.AppendLine($"время выполнения BOGO: {SortAndMeasureTime(BogoSort, sortOrder)} нс");
             }
-            if (sortingMethodsTimes.Count > 0)
-            {
-                var fastestMethod = sortingMethodsTimes.OrderBy(x => x.Value).First();
-                MessageBox.Show($"Самый быстрый метод сортировки: {fastestMethod.Key}\n" +
-                                $"Время выполнения: {fastestMethod.Value}");
-            } 
+            MessageBox.Show(resultBuilder.ToString(), "Затраченное время", MessageBoxButtons.OK, MessageBoxIcon.Information);
             textBox2.Clear();
-            for (int i = 0; i < arr.Count; i++)
+            for (int i = 0; i < dataGridViewNumbers.Count; i++)
             {
-                if (can)
-                {
-                    textBox2.Text += arr[i].ToString() + " ";
-                } 
+                textBox2.Text += dataGridViewNumbers[i].ToString() + " ";
             }
         }
-        private string FindFastestSortingMethod(List<double> list)
+        private double SortAndMeasureTime(Action<List<double>, SortOrder> sortingMethod, SortOrder sortOrder)
         {
-            Dictionary<string, TimeSpan> sortingMethodsTimes = new Dictionary<string, TimeSpan>();
-
-            List<double> copyList = new List<double>(list);
-            Stopwatch stopwatch = new Stopwatch();
-
+            List<double> numbersToSort = new List<double>(arr);
+            var stopwatch = new Stopwatch();
             stopwatch.Start();
-            BubbleSort(copyList);
+            sortingMethod(numbersToSort, sortOrder);
             stopwatch.Stop();
-            sortingMethodsTimes.Add("Bubble Sort", stopwatch.Elapsed);
-
-            //copyList = new List<double>(list);
-
-            stopwatch.Restart();
-            QuickSort(copyList, 0, copyList.Count - 1);
-            stopwatch.Stop();
-            sortingMethodsTimes.Add("Quick Sort", stopwatch.Elapsed);
-            
-
-            stopwatch.Restart();
-            ShakerSort(copyList);
-            stopwatch.Stop();
-            sortingMethodsTimes.Add("Shaker Sort", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            BogoSort(copyList);
-            stopwatch.Stop();
-            sortingMethodsTimes.Add("BOGO Sort", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            InsertionSort(copyList);
-            stopwatch.Stop();
-            sortingMethodsTimes.Add("Insertion Sort", stopwatch.Elapsed);
-
-            string fastestMethod = sortingMethodsTimes.OrderBy(x => x.Value).First().Key;
-
-            return fastestMethod;
+            return (double)stopwatch.ElapsedTicks * 1000000000 / Stopwatch.Frequency;
         }
-
+        
+        
         private void UpdateChart(List<double> list)
         {
             chart1.Series.Clear();
@@ -165,7 +134,7 @@ namespace OlympicSort
 
             chart1.Invalidate();
         }
-        private void BubbleSort(List<double> list)
+        private void BubbleSort(List<double> list, SortOrder sortOrder)
         {
             
             int n = list.Count;
@@ -174,20 +143,20 @@ namespace OlympicSort
             {
                 for (int j = 0; j < n - i - 1; j++)
                 {
-                    if (list[j] > list[j + 1])
+                    if ((sortOrder == SortOrder.Ascending && list[j] > list[j + 1]) ||
+                        (sortOrder == SortOrder.Descending && list[j] < list[j + 1]))
                     {
                         temp = list[j];
                         list[j] = list[j + 1];
                         list[j + 1] = temp;
                         UpdateChart(list);
-
                     }
                 }
             }
         }
 
 
-        private void InsertionSort(List<double> list)
+        private void InsertionSort(List<double> list, SortOrder sortOrder)
         {            
             double n = list.Count;
             for (int i = 1; i < n; i++)
@@ -195,42 +164,37 @@ namespace OlympicSort
                 double k = list[i];
                 int j = i - 1;
 
-                while (j >= 0 && list[j] > k)
+                while ((j >= 0 && sortOrder == SortOrder.Ascending  && list[j] > k) ||
+                       (j >= 0 && sortOrder == SortOrder.Descending && list[j] > k))
                 {
                     list[j + 1] = list[j];
                     list[j] = k;
                     j--;
                     UpdateChart(list);
-
-                    // Приостановка выполнения для визуализации процесса сортировки
-                    //Thread.Sleep(100);
                 }
             }
         }
 
-        private void QuickSort(List<double> list, int left, int right)
-        {
-            List<(double Index1, double Index2)> swapSteps = new List<(double Index1, double Index2)>();
+        private void QuickSort(List<double> list, int left, int right, SortOrder sortOrder)
+        {            
             if (left < right)
             {
-                int pivot = Partition(list, left, right);
+                int pivot = Partition(list, left, right, sortOrder);
 
-                QuickSort(list, left, pivot - 1);
-                QuickSort(list, pivot + 1, right);
+                QuickSort(list, left, pivot - 1, sortOrder);
+                QuickSort(list, pivot + 1, right, sortOrder);
                 UpdateChart(list);
-
-                // Приостановка выполнения для визуализации процесса сортировки
-               //Thread.Sleep(100);
             }
         }
-        static int Partition(List<double> list, int left, int right)
+        static int Partition(List<double> list, int left, int right, SortOrder sortOrder)
         {
             double pivot = list[right];
             int i = (left - 1);
 
             for (int j = left; j < right; j++)
             {
-                if (list[j] <= pivot)
+                if ((sortOrder == SortOrder.Ascending && list[j] <= pivot) ||
+                    (sortOrder == SortOrder.Descending && list[j] <= pivot))
                 {
                     i++;
                     double temp = list[i];
@@ -245,41 +209,36 @@ namespace OlympicSort
             return i + 1;
         }
 
-        private void ShakerSort(List<double> list)
-        {            
-            bool swapped;
-            do
+        private void ShakerSort(List<double> list, SortOrder sortOrder)
+        {
+            int left = 0;
+            int right = list.Count - 1;
+            bool swapped = true;
+            while (left < right && swapped)
             {
                 swapped = false;
-                for (int i = 0; i <= list.Count - 2; i++)
+                for (int i = left; i < right; ++i)
                 {
-                    if (arr[i] > arr[i + 1])
+                    if ((sortOrder == SortOrder.Ascending && list[i] > list[i + 1]) ||
+                        (sortOrder == SortOrder.Descending && list[i] > list[i + 1]))
                     {
                         Swap(list, i, i + 1);
                         swapped = true;
                     }
                 }
-
-                if (!swapped)
+                --right;
+                for (int i = right; i > left; --i)
                 {
-                    break;
-                }
-
-                swapped = false;
-
-                for (int i = list.Count - 2; i >= 0; i--)
-                {
-                    if (arr[i] > arr[i + 1])
+                    if ((sortOrder == SortOrder.Ascending && list[i] < list[i - 1]) ||
+                        (sortOrder == SortOrder.Ascending && list[i] < list[i - 1]))
                     {
-                        Swap(list, i, i + 1);
+                        Swap(list, i, i - 1);
                         swapped = true;
                     }
                 }
+                ++left;
                 UpdateChart(list);
-
-                // Приостановка выполнения для визуализации процесса сортировки
-                //Thread.Sleep(100);
-            } while (swapped);
+            }
         }
         static void Swap(List<double> list, int i, int j)
         {
@@ -288,18 +247,14 @@ namespace OlympicSort
             list[j] = temp;
         }
 
-        private void BogoSort(List<double> list)
-        {
-            List<(double Index1, double Index2)> swapSteps = new List<(double Index1, double Index2)>();
+        private void BogoSort(List<double> list, SortOrder sortOrder)
+        {            
             Random random = new Random();
 
-            while (!IsSorted(arr))
+            while (!IsSorted(arr, sortOrder))
             {
                 Shuffle(arr, random);
                 UpdateChart(list);
-
-                // Приостановка выполнения для визуализации процесса сортировки
-                //Thread.Sleep(100);
             }
         }
         static void Shuffle(List<double> list, Random random)
@@ -314,11 +269,12 @@ namespace OlympicSort
             }
         }
 
-        static bool IsSorted(List<double> list)
+        static bool IsSorted(List<double> list, SortOrder sortOrder)
         {
             for (int i = 1; i < list.Count; i++)
             {
-                if (list[i] < list[i - 1])
+                if ((sortOrder == SortOrder.Ascending && list[i] < list[i - 1]) ||
+                    (sortOrder == SortOrder.Descending && list[i] < list[i - 1]))
                 {
                     return false;
                 }
@@ -341,73 +297,15 @@ namespace OlympicSort
 
         }
         private void reverseToolStripMenuItem_Click(object sender, EventArgs e)
-        {            
-            bool can = true;
+        { 
             arr.Clear();
-            foreach (DataGridViewRow row in dataGridView1.Rows)
-            {
-                if (row.Cells[0].Value != null && double.TryParse(row.Cells[0].Value.ToString(), out double number))
-                {
-                    arr.Add(number);
-                }
-            }
-            if (checkBox1.Checked)
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                BubbleSort(arr);
-                arr.Reverse();
-                stopwatch.Stop();
-                MessageBox.Show($"Время выполнения пузырьковой: {stopwatch.Elapsed}");
-            }
-            else if (checkBox5.Checked)
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();InsertionSort(arr);
-                arr.Reverse();
-                stopwatch.Stop();
-                MessageBox.Show($"Время выполнения вставками: {stopwatch.Elapsed}");
-            }
-            else if (checkBox3.Checked)
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                ShakerSort(arr);
-                arr.Reverse();
-                stopwatch.Stop();
-                MessageBox.Show($"Время выполнения шейкерной: {stopwatch.Elapsed}");
-            }
-            else if (checkBox2.Checked)
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                QuickSort(arr, 0, arr.Count - 1);
-                arr.Reverse();
-                stopwatch.Stop();
-                MessageBox.Show($"Время выполнения быстрой: {stopwatch.Elapsed}");
-            }
-            else if (checkBox4.Checked)
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                BogoSort(arr);
-                arr.Reverse();
-                stopwatch.Stop();
-                MessageBox.Show($"Время выполнения BOGO: {stopwatch.Elapsed}");
-            }
-            textBox2.Clear();
-            for (int i = 0; i < arr.Count; i++)
-            {
-                if (can)
-                {
-                    textBox2.Text += arr[i].ToString() + " ";
-                }
-            }
+            SortNumbers(SortOrder.Descending);
         }
+
 
         private void button1_Click(object sender, EventArgs e)
         {
-            GenerateRandomData();
+           GenerateRandomData();
         }
     }
 }
