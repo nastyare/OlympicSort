@@ -120,7 +120,7 @@
             this.calculateToolStripMenuItem,
             this.deleteToolStripMenuItem,
             this.reverseToolStripMenuItem,
-            importToolStripMenuItem});
+            this.importToolStripMenuItem});
             this.menuToolStripMenuItem.Name = "menuToolStripMenuItem";
             this.menuToolStripMenuItem.Size = new System.Drawing.Size(64, 25);
             this.menuToolStripMenuItem.Text = "Menu";
@@ -131,13 +131,6 @@
             this.calculateToolStripMenuItem.Size = new System.Drawing.Size(233, 30);
             this.calculateToolStripMenuItem.Text = "Рассчитать";
             this.calculateToolStripMenuItem.Click += new System.EventHandler(this.calculateToolStripMenuItem_Click);
-            // 
-            // importToolStripMenuItem
-            // 
-            this.importToolStripMenuItem.Name = "calculateToolStripMenuItem";
-            this.importToolStripMenuItem.Size = new System.Drawing.Size(233, 30);
-            this.importToolStripMenuItem.Text = "импорт из Excel";
-            this.importToolStripMenuItem.Click += new System.EventHandler(this.importToolStripMenuItem_Click);
             // 
             // deleteToolStripMenuItem
             // 
@@ -152,6 +145,13 @@
             this.reverseToolStripMenuItem.Size = new System.Drawing.Size(233, 30);
             this.reverseToolStripMenuItem.Text = "Обратный массив";
             this.reverseToolStripMenuItem.Click += new System.EventHandler(this.reverseToolStripMenuItem_Click);
+            // 
+            // importToolStripMenuItem
+            // 
+            this.importToolStripMenuItem.Name = "importToolStripMenuItem";
+            this.importToolStripMenuItem.Size = new System.Drawing.Size(233, 30);
+            this.importToolStripMenuItem.Text = "импорт из Excel";
+            this.importToolStripMenuItem.Click += new System.EventHandler(this.importToolStripMenuItem_Click);
             // 
             // label2
             // 

@@ -29,10 +29,17 @@ namespace OlympicSort
             Random random = new Random();
             dataGridView1.Rows.Clear();
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 11; i++)
             {
-                dataGridView1.Rows.Add(random.Next(100), random.Next(100));
+                double number;
+                int dec = random.Next(1, 3);
+                number = Math.Round(random.NextDouble() * 201 - 100, dec);
+                dataGridView1.Rows.Add(number);
             }
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            GenerateRandomData();
         }
 
         private void importToolStripMenuItem_Click(object sender, EventArgs e)
@@ -103,8 +110,6 @@ namespace OlympicSort
                 GC.Collect();
             }
         }
-
-
         private void calculateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SortNumbers(SortOrder.Ascending);
@@ -114,12 +119,18 @@ namespace OlympicSort
             List<double> copy = new List<double>(list);
             QuickSort(copy, 0, copy.Count - 1, sortOrder);
         }
+
+        public struct SortStats
+        {
+            public double Time { get; set; }
+            public int Iterations { get; set; }
+        }
         private void SortNumbers(SortOrder sortOrder)
-        { 
+        {  // выбрана ли хотя бы однасортировка?
             if (!checkBox1.Checked && !checkBox2.Checked && !checkBox3.Checked &&
                 !checkBox4.Checked && !checkBox5.Checked)
             {
-                MessageBox.Show("Не выбран ни один из методов", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Отсутствуют данные для сортировки", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             List<double> dataGridViewNumbers = new List<double>();
@@ -130,68 +141,56 @@ namespace OlympicSort
                     dataGridViewNumbers.Add(number);
                 }
             }
-            if (checkBox1.Checked)
-            {
-                BubbleSort(dataGridViewNumbers, sortOrder);
-            }
-            if (checkBox5.Checked)
-            {
-                InsertionSort(dataGridViewNumbers, sortOrder);
-            }
-            if (checkBox3.Checked)
-            {
-                ShakerSort(dataGridViewNumbers, sortOrder);
-            }
-            if (checkBox2.Checked)
-            {
-                QuickSort(dataGridViewNumbers, 0, dataGridViewNumbers.Count - 1, sortOrder);
-            }
-            if (checkBox4.Checked)
-            {
-                BogoSort(dataGridViewNumbers, sortOrder);
-            }
-
-            
-            StringBuilder resultBuilder = new StringBuilder();
+            Dictionary<string, SortStats> sortStats = new Dictionary<string, SortStats>();
 
             if (checkBox1.Checked)
             {
-                resultBuilder.AppendLine($"время выполнения пузырьковой: {SortAndMeasureTime(BubbleSort, sortOrder)} нс");
+                sortStats["Пузырьковая"] = MeasureSortingStats(() => BubbleSort(dataGridViewNumbers, sortOrder));                               
             }
             if (checkBox5.Checked)
             {
-                resultBuilder.AppendLine($"время выполнения вставок: {SortAndMeasureTime(InsertionSort, sortOrder)} нс");
+                sortStats["Вставками"] = MeasureSortingStats(() => InsertionSort(dataGridViewNumbers, sortOrder));
             }
             if (checkBox3.Checked)
             {
-                resultBuilder.AppendLine($"время выполнения шейкерной: {SortAndMeasureTime(ShakerSort, sortOrder)} нс");
+                sortStats["Шейкерная"] = MeasureSortingStats(() => ShakerSort(dataGridViewNumbers, sortOrder));
             }
             if (checkBox2.Checked)
             {
-                resultBuilder.AppendLine($"время выполнения быстрой: {SortAndMeasureTime(QuickSortWrapper, sortOrder)} нс");
+                sortStats["Быстрая"] = MeasureSortingStats(() => QuickSortWrapper(dataGridViewNumbers, sortOrder));
             }
             if (checkBox4.Checked)
             {
-                resultBuilder.AppendLine($"время выполнения BOGO: {SortAndMeasureTime(BogoSort, sortOrder)} нс");
+                sortStats["BOGO"] = MeasureSortingStats(() => BogoSort(dataGridViewNumbers, sortOrder));
             }
-            MessageBox.Show(resultBuilder.ToString(), "Затраченное время", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ShowSortingStats(sortStats);
             textBox2.Clear();
             for (int i = 0; i < dataGridViewNumbers.Count; i++)
             {
                 textBox2.Text += dataGridViewNumbers[i].ToString() + " ";
             }
         }
-        private double SortAndMeasureTime(Action<List<double>, SortOrder> sortingMethod, SortOrder sortOrder)
+
+        private SortStats MeasureSortingStats(Action sortingAction)
         {
-            List<double> numbersToSort = new List<double>(arr);
-            var stopwatch = new Stopwatch();
+            Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            sortingMethod(numbersToSort, sortOrder);
+            sortingAction();
             stopwatch.Stop();
-            return (double)stopwatch.ElapsedTicks * 1000000000 / Stopwatch.Frequency;
+            double time = (double)stopwatch.ElapsedTicks / Stopwatch.Frequency * 1000000000;
+            return new SortStats { Time = time, Iterations = count };
         }
-        
-        
+
+        private void ShowSortingStats(Dictionary<string, SortStats> sortStats)
+        {
+            StringBuilder resultBuilder = new StringBuilder();
+            foreach (var kvp in sortStats)
+            {
+                resultBuilder.AppendLine($"{kvp.Key}: Время выполнения - {kvp.Value.Time} нс, Количество итераций - {kvp.Value.Iterations}");
+            }
+            MessageBox.Show(resultBuilder.ToString(), "Результаты сортировки", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
         private void UpdateChart(List<double> list)
         {
             chart1.Series.Clear();
@@ -204,6 +203,8 @@ namespace OlympicSort
 
             chart1.Invalidate();
         }
+
+        int count;
         private void BubbleSort(List<double> list, SortOrder sortOrder)
         {
             
@@ -211,23 +212,29 @@ namespace OlympicSort
             double temp;
             for (int i = 0; i < n - 1; i++)
             {
+                //count++;
                 for (int j = 0; j < n - i - 1; j++)
                 {
+                    ++count;
                     if ((sortOrder == SortOrder.Ascending && list[j] > list[j + 1]) ||
                         (sortOrder == SortOrder.Descending && list[j] < list[j + 1]))
                     {
                         temp = list[j];
                         list[j] = list[j + 1];
                         list[j + 1] = temp;
+
                         UpdateChart(list);
+
                     }
                 }
+                count++;
             }
+            //MessageBox.Show($"Iterations: {count}");
         }
 
 
         private void InsertionSort(List<double> list, SortOrder sortOrder)
-        {            
+        {
             double n = list.Count;
             for (int i = 1; i < n; i++)
             {
@@ -241,6 +248,7 @@ namespace OlympicSort
                     list[j] = k;
                     j--;
                     UpdateChart(list);
+                    count++;
                 }
             }
         }
@@ -252,9 +260,10 @@ namespace OlympicSort
                 int pivot = Partition(list, left, right, sortOrder);
 
                 QuickSort(list, left, pivot - 1, sortOrder);
-                QuickSort(list, pivot + 1, right, sortOrder);
-                UpdateChart(list);
+                QuickSort(list, pivot + 1, right, sortOrder);                
             }
+            UpdateChart(list);
+            count++;
         }
         static int Partition(List<double> list, int left, int right, SortOrder sortOrder)
         {
@@ -308,7 +317,9 @@ namespace OlympicSort
                 }
                 ++left;
                 UpdateChart(list);
+                count++;
             }
+            //MessageBox.Show($"Количество итераций для шейкерной сортировки: {count}", "Итерации", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         static void Swap(List<double> list, int i, int j)
         {
@@ -321,21 +332,24 @@ namespace OlympicSort
         {            
             Random random = new Random();
 
-            while (!IsSorted(arr, sortOrder))
+            while (!IsSorted(list, sortOrder))
             {
-                Shuffle(arr, random);
-                UpdateChart(list);
+                Shuffle(list, random);
             }
+            UpdateChart(list);
+            count++;
         }
-        static void Shuffle(List<double> list, Random random)
+        static void Shuffle(List<double> list, Random random)//, Random random)
         {
             int n = list.Count;
-            for (int i = 0; i < n; i++)
+            //Random rand = new Random();
+            while (n > 1)
             {
-                int randomIndex = i + random.Next(n - i);
-                double temp = list[i];
-                list[i] = list[randomIndex];
-                list[randomIndex] = temp;
+                --n;
+                int randomIndex = random.Next(n + 1);
+                double temp = list[randomIndex];
+                list[randomIndex] = list[n];
+                list[n] = temp;
             }
         }
 
@@ -343,8 +357,8 @@ namespace OlympicSort
         {
             for (int i = 1; i < list.Count; i++)
             {
-                if ((sortOrder == SortOrder.Ascending && list[i] < list[i - 1]) ||
-                    (sortOrder == SortOrder.Descending && list[i] < list[i - 1]))
+                if ((sortOrder == SortOrder.Ascending && list[i - 1] > list[i ]) ||
+                    (sortOrder == SortOrder.Descending && list[i - 1] < list[i]))
                 {
                     return false;
                 }
@@ -370,12 +384,6 @@ namespace OlympicSort
         { 
             arr.Clear();
             SortNumbers(SortOrder.Descending);
-        }
-
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-           GenerateRandomData();
-        }
+        }        
     }
 }
