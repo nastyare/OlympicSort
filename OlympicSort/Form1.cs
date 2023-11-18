@@ -114,10 +114,14 @@ namespace OlympicSort
         {
             SortNumbers(SortOrder.Ascending);
         }
-        private void QuickSortWrapper(List<double> list, SortOrder sortOrder)
+       /* private void QuickSortWrapper(List<double> list, SortOrder sortOrder)
         {
             List<double> copy = new List<double>(list);
             QuickSort(copy, 0, copy.Count - 1, sortOrder);
+        }*/
+       private void Wrapper(List<double> list, SortOrder sortOrder)
+        {
+            QuickSort(list, 0, list.Count - 1, sortOrder);
         }
 
         public struct SortStats
@@ -157,13 +161,16 @@ namespace OlympicSort
             }
             if (checkBox2.Checked)
             {
-                sortStats["Быстрая"] = MeasureSortingStats(() => QuickSortWrapper(dataGridViewNumbers, sortOrder));
+                sortStats["Быстрая"] = MeasureSortingStats(() => Wrapper(dataGridViewNumbers, sortOrder));
+            }
+            if (checkBox1.Checked || checkBox2.Checked || checkBox3.Checked || checkBox5.Checked)
+            {
+                ShowSortingStats(sortStats);
             }
             if (checkBox4.Checked)
             {
-                sortStats["BOGO"] = MeasureSortingStats(() => BogoSort(dataGridViewNumbers, sortOrder));
-            }
-            ShowSortingStats(sortStats);
+                BogoSort(dataGridViewNumbers);
+            }           
             textBox2.Clear();
             for (int i = 0; i < dataGridViewNumbers.Count; i++)
             {
@@ -186,7 +193,7 @@ namespace OlympicSort
             StringBuilder resultBuilder = new StringBuilder();
             foreach (var kvp in sortStats)
             {
-                resultBuilder.AppendLine($"{kvp.Key}: Время выполнения - {kvp.Value.Time} нс, Количество итераций - {kvp.Value.Iterations}");
+                resultBuilder.AppendLine($"{kvp.Key}: Время выполнения: {kvp.Value.Time} нс\nКоличество итераций: {kvp.Value.Iterations}");
             }
             MessageBox.Show(resultBuilder.ToString(), "Результаты сортировки", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -206,30 +213,24 @@ namespace OlympicSort
 
         int count;
         private void BubbleSort(List<double> list, SortOrder sortOrder)
-        {
-            
+        {         
             int n = list.Count;
             double temp;
-            for (int i = 0; i < n - 1; i++)
+            for (int i = 0; i < n; i++)
             {
-                //count++;
-                for (int j = 0; j < n - i - 1; j++)
+                for (int j = 0; j < n - 1; j++)
                 {
-                    ++count;
                     if ((sortOrder == SortOrder.Ascending && list[j] > list[j + 1]) ||
                         (sortOrder == SortOrder.Descending && list[j] < list[j + 1]))
                     {
-                        temp = list[j];
-                        list[j] = list[j + 1];
-                        list[j + 1] = temp;
-
-                        UpdateChart(list);
-
-                    }
-                }
-                count++;
-            }
-            //MessageBox.Show($"Iterations: {count}");
+                        temp = list[j + 1];
+                        list[j + 1] = list[j];
+                        list[j] = temp;
+                        count++;
+                    }                    
+                }               
+            }          
+            UpdateChart(list);
         }
 
 
@@ -242,30 +243,31 @@ namespace OlympicSort
                 int j = i - 1;
 
                 while ((j >= 0 && sortOrder == SortOrder.Ascending  && list[j] > k) ||
-                       (j >= 0 && sortOrder == SortOrder.Descending && list[j] > k))
+                       (j >= 0 && sortOrder == SortOrder.Descending && list[j] < k))
                 {
                     list[j + 1] = list[j];
-                    list[j] = k;
-                    j--;
-                    UpdateChart(list);
-                    count++;
+                    j--;   
                 }
+                list[j + 1] = k;
             }
+            count++;
+            UpdateChart(list);
         }
 
-        private void QuickSort(List<double> list, int left, int right, SortOrder sortOrder)
-        {            
-            if (left < right)
-            {
-                int pivot = Partition(list, left, right, sortOrder);
+        private void QuickSort(List<double> list, int start, int end, SortOrder sortOrder)
+        {
+            if (start >= end)
+                return; //{
+           
+            int pivot = PartitionTwo(list, start, end, sortOrder);
 
-                QuickSort(list, left, pivot - 1, sortOrder);
-                QuickSort(list, pivot + 1, right, sortOrder);                
-            }
+            QuickSort(list, start, pivot - 1, sortOrder);
+            QuickSort(list, pivot + 1, end, sortOrder);                
+            //}
             UpdateChart(list);
             count++;
         }
-        static int Partition(List<double> list, int left, int right, SortOrder sortOrder)
+       /* static int Partition(List<double> list, int left, int right, SortOrder sortOrder)
         {
             double pivot = list[right];
             int i = (left - 1);
@@ -286,6 +288,22 @@ namespace OlympicSort
             list[right] = temp1;
 
             return i + 1;
+        }*/
+
+        int PartitionTwo(List<double> list, int start, int end, SortOrder sortOrder)
+        {
+            int marker = start; // divides left and right subarrays
+            for (int i = start; i < end; i++)
+            {
+                if (list[i] < list[end]) // array[end] is pivot
+                {
+                    (list[marker], list[i]) = (list[i], list[marker]);
+                    marker += 1;
+                }
+            }
+            // put pivot(array[end]) between left and right subarrays
+            (list[marker], list[end]) = (list[end], list[marker]);
+            return marker;
         }
 
         private void ShakerSort(List<double> list, SortOrder sortOrder)
@@ -328,32 +346,53 @@ namespace OlympicSort
             list[j] = temp;
         }
 
-        private void BogoSort(List<double> list, SortOrder sortOrder)
+        
+        public void BogoSort(List<double> list)
         {            
             Random random = new Random();
-
-            while (!IsSorted(list, sortOrder))
+            int iter = 0;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            while (!IsSorted(list))
             {
-                Shuffle(list, random);
+                list = Shuffle(list);
+                iter++;
             }
+            stopwatch.Stop();
+            double time = (double)stopwatch.ElapsedTicks;
+            PrintIter(iter, time);
             UpdateChart(list);
-            count++;
+            
         }
-        static void Shuffle(List<double> list, Random random)//, Random random)
+
+
+        static void PrintIter(int iter, double time)
         {
-            int n = list.Count;
-            //Random rand = new Random();
-            while (n > 1)
+            MessageBox.Show($"Количество итераций: {iter}\nВремя выполнения: {time} нс");
+        }
+        static List<double> Shuffle(List<double> list)//, Random random)
+        {
+            //int n = list.Count;
+            Random rand = new Random();
+            /*while (n > 1)
             {
                 --n;
                 int randomIndex = random.Next(n + 1);
                 double temp = list[randomIndex];
                 list[randomIndex] = list[n];
                 list[n] = temp;
+            }*/
+            for (int n = list.Count - 1; n > 0; --n)
+            {
+                int k = rand.Next(n + 1);
+                double temp = list[n];
+                list[n] = list[k];
+                list[k] = temp;
             }
+            return list;
         }
 
-        static bool IsSorted(List<double> list, SortOrder sortOrder)
+        /*static bool IsSorted(List<double> list, SortOrder sortOrder)
         {
             for (int i = 1; i < list.Count; i++)
             {
@@ -363,6 +402,18 @@ namespace OlympicSort
                     return false;
                 }
             }
+            return true;
+        }*/
+        static bool IsSorted(List<double> list)
+        {
+            for (int i = 0; i < list.Count - 1; i++)
+            {
+                if (list[i] > list[i + 1])
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
 
